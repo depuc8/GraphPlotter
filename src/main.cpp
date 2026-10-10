@@ -1,9 +1,19 @@
 #include <SDL3/SDL.h>
 #include <iostream>
+#include <string>
+
+#include "GraphPlotter.hpp"
 
 using namespace std;
 
-int main(){
+int main(int argc, char* argv[]){
+
+    GraphPlotter plotter;
+    string equation = argc > 1 ? argv[1] : "sin(x)";
+    if(!plotter.setEquation(equation)){
+        cerr << "Could not parse \"" << equation << "\": " << plotter.error() << '\n';
+        return 1;
+    }
 
     if(!SDL_Init(SDL_INIT_VIDEO)){
         cerr << "SDL_Init failed: " << SDL_GetError() << '\n';
@@ -36,8 +46,7 @@ int main(){
             }
         }
 
-        SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
-        SDL_RenderClear(renderer);
+        plotter.render(renderer);
         SDL_RenderPresent(renderer);
     }
 
