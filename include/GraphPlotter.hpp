@@ -13,6 +13,11 @@ public:
 
     void render(SDL_Renderer* renderer) const;
 
+    // View controls. Screen positions are in render pixels.
+    void zoom(double factor, float sx, float sy, int w, int h);
+    void pan(float dx, float dy);
+    void resetView();
+
 private:
     // The view: world point shown at the centre of the screen,
     // and how many pixels one world unit takes up.

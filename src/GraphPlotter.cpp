@@ -26,6 +26,27 @@ bool GraphPlotter::setEquation(const string& text){
     return true;
 }
 
+// Zoom so the world point under (sx, sy) stays under the cursor.
+void GraphPlotter::zoom(double factor, float sx, float sy, int w, int h){
+    double wx = toWorldX(sx, w);
+    double wy = toWorldY(sy, h);
+    scale = clamp(scale * factor, 1e-6, 1e9);
+    centerX = wx - (sx - w / 2.0) / scale;
+    centerY = wy + (sy - h / 2.0) / scale;
+}
+
+// Move the view by a screen distance, as if dragging the paper.
+void GraphPlotter::pan(float dx, float dy){
+    centerX -= dx / scale;
+    centerY += dy / scale;
+}
+
+void GraphPlotter::resetView(){
+    centerX = 0.0;
+    centerY = 0.0;
+    scale = 50.0;
+}
+
 // Distance between major grid lines: 1, 2 or 5 times a power of ten,
 // chosen so lines stay at least ~80 pixels apart at any zoom.
 double GraphPlotter::gridStep() const {
