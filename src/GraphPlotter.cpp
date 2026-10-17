@@ -138,23 +138,31 @@ void GraphPlotter::drawCurve(SDL_Renderer* renderer, int w, int h) const {
     };
 
     // Two samples per pixel column. The curve is split into strips
-    // wherever it is undefined (sqrt(-1), 1/0) or jumps by more than a
-    // screen height between samples (asymptotes like tan(x) or 1/x).
+    // wherever it is undefined (sqrt(-1), 1/0) or jumps across an
+    // asymptote (tan(x), 1/x). A big jump counts as an asymptote when the
+    // value halfway between the samples doesn't lie between them; a steep
+    // but continuous curve passes that test and stays connected.
     const int samplesPerPixel = 2;
+    double prevX = 0.0, prevY = 0.0;
     for(int i = 0; i <= w * samplesPerPixel; i++){
         float sx = (float)i / samplesPerPixel;
-        double y = expression.eval(toWorldX(sx, w));
+        double x = toWorldX(sx, w);
+        double y = expression.eval(x);
 
         if(!isfinite(y)){
             flush();
             continue;
         }
 
-        float sy = toScreenY(y, h);
-        if(!strip.empty() && fabs(sy - strip.back().y) > h) flush();
+        if(!strip.empty() && fabs(y - prevY) * scale > h){
+            double mid = expression.eval((x + prevX) / 2.0);
+            if(!isfinite(mid) || mid < min(y, prevY) || mid > max(y, prevY)) flush();
+        }
+        prevX = x;
+        prevY = y;
 
         // Keep coordinates in a sane range for the renderer.
-        sy = clamp(sy, -10.0f * h, 11.0f * h);
+        float sy = clamp(toScreenY(y, h), -10.0f * h, 11.0f * h);
         strip.push_back({sx, sy});
     }
     flush();
