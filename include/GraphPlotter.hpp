@@ -7,9 +7,15 @@
 
 class GraphPlotter {
 public:
-    // Parses and plots the equation. On error the previous curve is kept.
+    // Parses and plots the equation. On error the previous curve is kept
+    // and error() says what went wrong.
     bool setEquation(const std::string& text);
     const std::string& error() const { return expression.error(); }
+
+    // Editing the equation box at the top of the window.
+    void typeText(const std::string& text) { input += text; }
+    void backspace();
+    bool submit() { return setEquation(input); }
 
     void render(SDL_Renderer* renderer) const;
 
@@ -26,7 +32,7 @@ private:
     double scale = 50.0;
 
     Expression expression;
-    std::string equation;
+    std::string input;
 
     double toWorldX(float sx, int w) const { return centerX + (sx - w / 2.0) / scale; }
     double toWorldY(float sy, int h) const { return centerY - (sy - h / 2.0) / scale; }
@@ -37,4 +43,5 @@ private:
     void drawGrid(SDL_Renderer* renderer, int w, int h) const;
     void drawAxes(SDL_Renderer* renderer, int w, int h) const;
     void drawCurve(SDL_Renderer* renderer, int w, int h) const;
+    void drawOverlay(SDL_Renderer* renderer, int w, int h) const;
 };

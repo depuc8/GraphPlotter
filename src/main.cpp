@@ -9,13 +9,6 @@ using namespace std;
 
 int main(int argc, char* argv[]){
 
-    GraphPlotter plotter;
-    string equation = argc > 1 ? argv[1] : "sin(x)";
-    if(!plotter.setEquation(equation)){
-        cerr << "Could not parse \"" << equation << "\": " << plotter.error() << '\n';
-        return 1;
-    }
-
     if(!SDL_Init(SDL_INIT_VIDEO)){
         cerr << "SDL_Init failed: " << SDL_GetError() << '\n';
         return 1;
@@ -36,6 +29,11 @@ int main(int argc, char* argv[]){
         return 1;
     }
     SDL_SetRenderVSync(renderer, 1);
+    SDL_StartTextInput(window);
+
+    // Optional starting equation from the command line.
+    GraphPlotter plotter;
+    plotter.setEquation(argc > 1 ? argv[1] : "sin(x)");
 
     bool running = true;
     bool dragging = false;
@@ -52,6 +50,10 @@ int main(int argc, char* argv[]){
             switch(event.type){
             case SDL_EVENT_QUIT:
                 running = false;
+                break;
+
+            case SDL_EVENT_TEXT_INPUT:
+                plotter.typeText(event.text.text);
                 break;
 
             case SDL_EVENT_MOUSE_WHEEL:
@@ -72,14 +74,24 @@ int main(int argc, char* argv[]){
 
             case SDL_EVENT_KEY_DOWN:
                 switch(event.key.key){
-                case SDLK_ESCAPE:   running = false; break;
-                case SDLK_LEFT:     plotter.pan( 40,   0); break;
-                case SDLK_RIGHT:    plotter.pan(-40,   0); break;
-                case SDLK_UP:       plotter.pan(  0,  40); break;
-                case SDLK_DOWN:     plotter.pan(  0, -40); break;
-                case SDLK_PAGEUP:   plotter.zoom(1.25, w / 2.0f, h / 2.0f, w, h); break;
-                case SDLK_PAGEDOWN: plotter.zoom(0.8,  w / 2.0f, h / 2.0f, w, h); break;
-                case SDLK_HOME:     plotter.resetView(); break;
+                case SDLK_ESCAPE:    running = false; break;
+                case SDLK_RETURN:
+                case SDLK_KP_ENTER:  plotter.submit(); break;
+                case SDLK_BACKSPACE: plotter.backspace(); break;
+                case SDLK_V:
+                    if(event.key.mod & SDL_KMOD_CTRL){
+                        char* clip = SDL_GetClipboardText();
+                        plotter.typeText(clip);
+                        SDL_free(clip);
+                    }
+                    break;
+                case SDLK_LEFT:      plotter.pan( 40,   0); break;
+                case SDLK_RIGHT:     plotter.pan(-40,   0); break;
+                case SDLK_UP:        plotter.pan(  0,  40); break;
+                case SDLK_DOWN:      plotter.pan(  0, -40); break;
+                case SDLK_PAGEUP:    plotter.zoom(1.25, w / 2.0f, h / 2.0f, w, h); break;
+                case SDLK_PAGEDOWN:  plotter.zoom(0.8,  w / 2.0f, h / 2.0f, w, h); break;
+                case SDLK_HOME:      plotter.resetView(); break;
                 }
                 break;
             }
@@ -89,6 +101,7 @@ int main(int argc, char* argv[]){
         SDL_RenderPresent(renderer);
     }
 
+    SDL_StopTextInput(window);
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     SDL_Quit();
